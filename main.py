@@ -3,6 +3,8 @@ from discord import app_commands
 import re
 import random
 import os
+import json
+import asyncio
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,6 +14,37 @@ intents = discord.Intents.default()
 intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+
+# Estrutura para armazenar estatísticas
+class Stats:
+    def __init__(self):
+        self.total_rolls = 0
+        self.load_stats()
+    
+    def load_stats(self):
+        try:
+            if os.path.exists('stats.json'):
+                with open('stats.json', 'r') as f:
+                    data = json.load(f)
+                    self.total_rolls = data.get('total_rolls', 0)
+        except Exception as e:
+            print(f"Erro ao carregar estatísticas: {e}")
+    
+    def save_stats(self):
+        try:
+            with open('stats.json', 'w') as f:
+                json.dump({
+                    'total_rolls': self.total_rolls
+                }, f)
+        except Exception as e:
+            print(f"Erro ao salvar estatísticas: {e}")
+    
+    def increment_rolls(self, count=1):
+        self.total_rolls += count
+        self.save_stats()
+
+# Instanciar as estatísticas
+stats = Stats()
 
 def parse_dice_notation(notation):
     # Padrão para rolagem normal com vantagem/desvantagem e modificadores
@@ -87,9 +120,23 @@ def format_roll_result(notation, rolls, detailed_rolls, result, modifier_or_diff
 async def rolld(interaction, dice: str):
     result = process_dice_command(dice)
     if result:
+        stats.increment_rolls()
+        await update_presence()
         await interaction.response.send_message(result)
     else:
         await interaction.response.send_message("Notação de dados inválida. Use formatos como '3d6+2', '1d20adv' ou '5d10cd6'.")
+
+@tree.command(name="stats", description="Mostra estatísticas do bot")
+async def bot_stats(interaction):
+    server_count = len(client.guilds)
+    embed = discord.Embed(
+        title="🎲 Estatísticas do RollDice",
+        color=discord.Color.blue()
+    )
+    embed.add_field(name="Servidores", value=f"{server_count}", inline=True)
+    embed.add_field(name="Total de Rolagens", value=f"{stats.total_rolls:,}", inline=True)
+    
+    await interaction.response.send_message(embed=embed)
 
 def process_dice_command(dice_notation):
     dice_notation = dice_notation.lower().replace(" ", "")
@@ -115,10 +162,37 @@ def process_dice_command(dice_notation):
         )
         return format_roll_result(dice_notation, rolls, detailed_rolls, total, modifier)
 
+async def update_presence():
+    server_count = len(client.guilds)
+    activity = discord.Activity(
+        type=discord.ActivityType.playing,
+        name=f"🎲 em {server_count} servidores | {stats.total_rolls:,} rolagens"
+    )
+    await client.change_presence(activity=activity)
+
+async def presence_updater():
+    while True:
+        await update_presence()
+        await asyncio.sleep(300)  # Atualiza a cada 5 minutos
+
 @client.event
 async def on_ready():
     await tree.sync()
     print(f'{client.user} está conectado e pronto!')
+    
+    # Iniciar o loop de atualização de presença
+    client.loop.create_task(presence_updater())
+    await update_presence()
+
+@client.event
+async def on_guild_join(guild):
+    # Atualiza a presença quando o bot entra em um novo servidor
+    await update_presence()
+
+@client.event
+async def on_guild_remove(guild):
+    # Atualiza a presença quando o bot sai de um servidor
+    await update_presence()
 
 @client.event
 async def on_message(message):
@@ -132,6 +206,8 @@ async def on_message(message):
     if re.match(dice_pattern, content):
         result = process_dice_command(content)
         if result:
+            stats.increment_rolls()
+            await update_presence()
             await message.channel.send(result)
 
 client.run(TOKEN)
