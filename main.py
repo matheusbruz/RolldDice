@@ -116,7 +116,7 @@ def format_roll_result(notation, rolls, detailed_rolls, result, modifier_or_diff
     
     return base_result
 
-@tree.command(name="rolld", description="Roll dice using standard notation (e.g. 3d6+2 or 5d10cd6)")
+@tree.command(name="rolld", description="Rola dados usando notação padrão (ex: 3d6+2 ou 5d10cd6)")
 async def rolld(interaction, dice: str):
     result = process_dice_command(dice)
     if result:
@@ -135,6 +135,88 @@ async def bot_stats(interaction):
     )
     embed.add_field(name="Servidores", value=f"{server_count}", inline=True)
     embed.add_field(name="Total de Rolagens", value=f"{stats.total_rolls:,}", inline=True)
+    
+    await interaction.response.send_message(embed=embed)
+
+@tree.command(name="help", description="Mostra informações sobre como usar o bot")
+async def help_command(interaction):
+    embed = discord.Embed(
+        title="📖 Guia do RollDice",
+        description="O RollDice é um bot completo para rolagem de dados com várias funcionalidades. Abaixo você encontrará explicações sobre cada tipo de rolagem disponível.",
+        color=discord.Color.green()
+    )
+    
+    # Rolagem básica
+    embed.add_field(
+        name="📋 Rolagem Básica",
+        value=(
+            "Role dados usando a notação padrão de RPG:\n"
+            "- `/rolld 3d6` - Rola 3 dados de 6 lados\n"
+            "- `4d10` - Também funciona sem o comando, apenas digitando no chat\n"
+            "- `/rolld 2d20` - Rola 2 dados de 20 lados\n"
+            "- `/rolld 1d100` - Rola 1 dado de 100 lados (d100/d%)"
+        ),
+        inline=False
+    )
+    
+    # Modificadores
+    embed.add_field(
+        name="➕ Modificadores",
+        value=(
+            "Adicione bônus ou penalidades às suas rolagens:\n"
+            "- `/rolld 1d20+5` - Rola 1d20 e adiciona 5 ao resultado\n"
+            "- `2d8-3` - Rola 2d8 e subtrai 3 do resultado\n"
+            "- `/rolld 3d6+2` - Rola 3d6 e adiciona 2 ao resultado final"
+        ),
+        inline=False
+    )
+    
+    # Vantagem/Desvantagem
+    embed.add_field(
+        name="🔄 Vantagem e Desvantagem",
+        value=(
+            "Role com vantagem (melhor de dois) ou desvantagem (pior de dois):\n"
+            "- `/rolld 1d20adv` - Rola 1d20 com vantagem (rola 2 vezes, pega o maior)\n"
+            "- `2d20dis` - Rola 2d20 com desvantagem (rola 2 vezes para cada dado, pega o menor)\n"
+            "- `/rolld 1d20adv+4` - Combina vantagem com modificadores"
+        ),
+        inline=False
+    )
+    
+    # Contagem de Sucessos
+    embed.add_field(
+        name="✅ Contagem de Sucessos",
+        value=(
+            "Conte quantos dados atingem ou superam uma classe de dificuldade (CD):\n"
+            "- `/rolld 5d10cd6` - Rola 5d10 e conta quantos resultados são ≥ 6\n"
+            "- `7d8cd4` - Rola 7d8 e conta quantos resultados são ≥ 4\n"
+            "- `/rolld 10d6cd5` - Ideal para sistemas como World of Darkness"
+        ),
+        inline=False
+    )
+    
+    # Estatísticas
+    embed.add_field(
+        name="📊 Estatísticas do Bot",
+        value=(
+            "Veja informações sobre o uso do bot:\n"
+            "- `/stats` - Mostra o número de servidores e total de rolagens"
+        ),
+        inline=False
+    )
+    
+    # Dicas
+    embed.add_field(
+        name="💡 Dicas",
+        value=(
+            "- Você pode usar o comando `/rolld` ou simplesmente digitar a notação dos dados (ex: `3d6+2`)\n"
+            "- O limite é de 100 dados por rolagem\n"
+            "- Todas as rolagens são geradas aleatoriamente usando o sistema random.randint() do Python"
+        ),
+        inline=False
+    )
+    
+    embed.set_footer(text="RollDice - O melhor companheiro para suas sessões de RPG!")
     
     await interaction.response.send_message(embed=embed)
 
