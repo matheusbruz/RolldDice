@@ -15,7 +15,6 @@ intents.message_content = True
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
-# Estrutura para armazenar estatísticas
 class Stats:
     def __init__(self):
         self.total_rolls = 0
@@ -43,17 +42,13 @@ class Stats:
         self.total_rolls += count
         self.save_stats()
 
-# Instanciar as estatísticas
 stats = Stats()
 
 def parse_dice_notation(notation):
-    # Padrão para rolagem normal com vantagem/desvantagem e modificadores
     base_pattern = r'(\d+)d(\d+)([adv|dis]*)([+-]\d+)?'
     
-    # Padrão para rolagem com contagem de sucessos (ex: 5d10cd6)
     success_pattern = r'(\d+)d(\d+)cd(\d+)'
     
-    # Tentativa com contagem de sucessos primeiro
     success_match = re.match(success_pattern, notation)
     if success_match:
         num_dice = int(success_match.group(1))
@@ -61,7 +56,6 @@ def parse_dice_notation(notation):
         difficulty = int(success_match.group(3))
         return num_dice, dice_value, "", 0, "success", difficulty
     
-    # Tentativa com rolagem normal
     base_match = re.match(base_pattern, notation)
     if base_match:
         num_dice = int(base_match.group(1))
@@ -146,7 +140,6 @@ async def help_command(interaction):
         color=discord.Color.green()
     )
     
-    # Rolagem básica
     embed.add_field(
         name="📋 Rolagem Básica",
         value=(
@@ -159,7 +152,6 @@ async def help_command(interaction):
         inline=False
     )
     
-    # Modificadores
     embed.add_field(
         name="➕ Modificadores",
         value=(
@@ -171,7 +163,6 @@ async def help_command(interaction):
         inline=False
     )
     
-    # Vantagem/Desvantagem
     embed.add_field(
         name="🔄 Vantagem e Desvantagem",
         value=(
@@ -183,7 +174,6 @@ async def help_command(interaction):
         inline=False
     )
     
-    # Contagem de Sucessos
     embed.add_field(
         name="✅ Contagem de Sucessos",
         value=(
@@ -195,7 +185,6 @@ async def help_command(interaction):
         inline=False
     )
     
-    # Estatísticas
     embed.add_field(
         name="📊 Estatísticas do Bot",
         value=(
@@ -205,7 +194,6 @@ async def help_command(interaction):
         inline=False
     )
     
-    # Dicas
     embed.add_field(
         name="💡 Dicas",
         value=(
@@ -229,7 +217,6 @@ def process_dice_command(dice_notation):
     
     num_dice, dice_value, advantage_type, modifier, roll_type, difficulty = parsed
     
-    # Limit reasonable values to prevent abuse
     if num_dice > 100 or dice_value > 1000:
         return "Por favor, use valores razoáveis (máximo 100 dados com até 1000 lados)"
     
@@ -262,18 +249,15 @@ async def on_ready():
     await tree.sync()
     print(f'{client.user} está conectado e pronto!')
     
-    # Iniciar o loop de atualização de presença
     client.loop.create_task(presence_updater())
     await update_presence()
 
 @client.event
 async def on_guild_join(guild):
-    # Atualiza a presença quando o bot entra em um novo servidor
     await update_presence()
 
 @client.event
 async def on_guild_remove(guild):
-    # Atualiza a presença quando o bot sai de um servidor
     await update_presence()
 
 @client.event
@@ -283,7 +267,6 @@ async def on_message(message):
     
     content = message.content.strip()
     
-    # Verifica se a mensagem contém apenas notação de dados sem prefixo de comando
     dice_pattern = r'^\d+d\d+([adv|dis]*)([+-]\d+)?$|^\d+d\d+cd\d+$'
     if re.match(dice_pattern, content):
         result = process_dice_command(content)
@@ -292,17 +275,14 @@ async def on_message(message):
             await update_presence()
             await message.channel.send(result)
 
-# Adicionar um segundo comando de ajuda com o nome em inglês também
 @tree.command(name="help", description="Mostra informações sobre como usar o bot")
 async def help_command_en(interaction):
-    # Reutiliza a mesma implementação do comando "ajuda"
     embed = discord.Embed(
         title="📖 Guia do RollDice",
         description="O RollDice é um bot completo para rolagem de dados com várias funcionalidades. Abaixo você encontrará explicações sobre cada tipo de rolagem disponível.",
         color=discord.Color.green()
     )
     
-    # Rolagem básica
     embed.add_field(
         name="📋 Rolagem Básica",
         value=(
@@ -315,7 +295,6 @@ async def help_command_en(interaction):
         inline=False
     )
     
-    # Modificadores
     embed.add_field(
         name="➕ Modificadores",
         value=(
@@ -327,7 +306,6 @@ async def help_command_en(interaction):
         inline=False
     )
     
-    # Vantagem/Desvantagem
     embed.add_field(
         name="🔄 Vantagem e Desvantagem",
         value=(
@@ -339,7 +317,6 @@ async def help_command_en(interaction):
         inline=False
     )
     
-    # Contagem de Sucessos
     embed.add_field(
         name="✅ Contagem de Sucessos",
         value=(
@@ -351,7 +328,6 @@ async def help_command_en(interaction):
         inline=False
     )
     
-    # Estatísticas
     embed.add_field(
         name="📊 Estatísticas do Bot",
         value=(
@@ -361,7 +337,6 @@ async def help_command_en(interaction):
         inline=False
     )
     
-    # Dicas
     embed.add_field(
         name="💡 Dicas",
         value=(
